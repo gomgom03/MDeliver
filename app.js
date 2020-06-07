@@ -16,10 +16,6 @@ let server = app.listen(port, () => {
     console.log(`Listening to port ${port}`)
 })
 
-app.get('/users', (req, res) => {
-    res.send(users);
-})
-
 app.get('/', (req, res) => {
     res.render("home.ejs")
 })
@@ -64,6 +60,7 @@ app.post('/userInfo', async (req, res) => {
         const pw = await bcrypt.hash(password, salt)
         users.push({ username: username, password: pw, firstName: firstName, lastName: lastName, email: email, number: pNumber, ddriver: ddriver })
         res.send("Success!");
+        console.log(users);
     } catch (err) {
         res.status(500).redirect("/failure")
     }
@@ -72,14 +69,16 @@ app.post('/userInfo', async (req, res) => {
 app.post('/userAuth', async (req, res) => {
 
     let { username, password } = req.body;
-    const user = users.find(x => x.username = username);
+    const user = users.find(x => x.username === username);
     console.log(user);
     if (user == null) {
         return res.status(400).send('Cannot find user')
     }
     try {
-
+        console.log(password, user.password);
+        console.log(await bcrypt.compare(password, user.password))
         if (await bcrypt.compare(password, user.password)) {
+
             let { firstName, lastName, email, number, ddriver } = user;
             res.cookie('username', username);
             res.cookie('firstName', firstName);
@@ -90,7 +89,7 @@ app.post('/userAuth', async (req, res) => {
             res.send("Success!");
 
         } else {
-            res.send("Login Error");
+            res.send("Login Failure")
         }
     } catch (err) {
         res.status(500).redirect("/failure");
